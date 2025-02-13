@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Attendance System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- jQuery (optional for additional AJAX support) -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body class="bg-gray-100">
+  <!-- Navigation Bar -->
+  <nav class="bg-white shadow fixed w-full top-0 z-10">
+    <div class="container mx-auto px-4">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex-shrink-0">
+          <a href="#" class="text-xl font-bold">Attendance System</a>
+        </div>
+        <div class="hidden md:block">
+          <div class="ml-10 flex space-x-4">
+            <a href="#" onclick="showSection('dashboard')" class="text-gray-700 hover:text-blue-500 px-3 py-2 rounded">Dashboard</a>
+            <a href="#" onclick="showSection('reports')" class="text-gray-700 hover:text-blue-500 px-3 py-2 rounded">Reports</a>
+            <a href="#" onclick="showSection('unknown')" class="text-gray-700 hover:text-blue-500 px-3 py-2 rounded">Unknown Faces</a>
+            <a href="#" onclick="showSection('manual')" class="text-gray-700 hover:text-blue-500 px-3 py-2 rounded">Manual Entry</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="container mx-auto px-4 pt-20">
+    <!-- Dashboard Section -->
+    <div id="dashboard" class="section">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Video Feed Card -->
+        <div class="bg-white shadow rounded-lg overflow-hidden">
+          <div class="px-4 py-2 border-b">
+            <h4 class="font-bold text-xl">Live Video Feed</h4>
+          </div>
+          <div class="p-4 bg-black">
+            <img src="{{ url_for('video_feed') }}" alt="Live Video" class="w-full">
+          </div>
+          <div class="px-4 py-2 border-t flex justify-end space-x-2">
+            <button onclick="downloadCSV()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Download CSV</button>
+            <button onclick="clearAttendance()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Clear Attendance</button>
+          </div>
+        </div>
+        <!-- Attendance Log and Chart -->
+        <div class="space-y-4">
+          <div class="bg-white shadow rounded-lg p-4">
+            <h4 class="font-bold text-xl mb-4">Attendance Log</h4>
+            <ul id="attendance-log" class="space-y-2">
+              {% if attendance %}
+                {% for entry in attendance[::-1] %}
+                  <li class="border-b py-1">{{ entry }}</li>
+                {% endfor %}
+              {% else %}
+                <li class="py-1">No attendance records yet.</li>
+              {% endif %}
+            </ul>
+          </div>
+          <div class="bg-white shadow rounded-lg p-4">
+            <h4 class="font-bold text-xl mb-4">Attendance Statistics (IN Counts)</h4>
+            <canvas id="attendanceChart" class="w-full"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reports Section -->
+    <div id="reports" class="section hidden">
+      <div class="bg-white shadow rounded-lg p-4">
+        <h4 class="font-bold text-xl mb-4">Attendance Reports</h4>
+        <div class="mb-4">
+          <input id="report-name" type="text" placeholder="Student Name" class="border px-3 py-2 rounded mr-2">
+          <input id="report-date" type="text" placeholder="YYYY-MM-DD" class="border px-3 py-2 rounded mr-2">
+          <button onclick="fetchReports()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Filter</button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="min-w-full bg-white border">
+            <thead class="bg-gray-200">
+              <tr>
+                <th class="border px-4 py-2">Name</th>
+                <th class="border px-4 py-2">Event</th>
+                <th class="border px-4 py-2">Timestamp</th>
+              </tr>
+            </thead>
+            <tbody id="reports-table-body">
+              <!-- Report rows injected via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Unknown Faces Section -->
+    <div id="unknown" class="section hidden">
+      <div class="bg-white shadow rounded-lg p-4">
+        <h4 class="font-bold text-xl mb-4">Unknown Faces Gallery</h4>
+        <div id="unknown-gallery" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <!-- Unknown face cards injected via JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Manual Entry Section -->
+    <div id="manual" class="section hidden">
+      <div class="bg-white shadow rounded-lg p-4">
+        <h4 class="font-bold text-xl mb-4">Manual Attendance Entry</h4>
+        <form onsubmit="submitManualEntry(event)" class="space-y-4">
+          <div>
+            <label class="block font-medium">Student Name:</label>
+            <input type="text" name="name" class="w-full border px-3 py-2 rounded" required>
+          </div>
+          <div>
+            <label class="block font-medium">Event (IN/OUT):</label>
+            <select name="event" class="w-full border px-3 py-2 rounded" required>
+              <option value="IN">IN</option>
+              <option value="OUT">OUT</option>
+            </select>
+          </div>
+          <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Submit</button>
+        </form>
+        <p id="manual-message" class="mt-4 text-green-600"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-white shadow mt-10">
+    <div class="container mx-auto px-4 py-4 text-center">
+      &copy; 2025 Attendance System. All rights reserved.
+    </div>
+  </footer>
+
+  <!-- JavaScript -->
+  <script>
+    // Section switching
+    function showSection(sectionId) {
+      document.querySelectorAll('.section').forEach(el => el.classList.add('hidden'));
+      document.getElementById(sectionId).classList.remove('hidden');
+      if(sectionId === 'reports'){
+        fetchReports();
+      } else if(sectionId === 'unknown'){
+        fetchUnknownFaces();
+      }
+    }
+    
+    // Auto-refresh the attendance log on the dashboard
+    function fetchAttendance() {
+      fetch('/api/attendance')
+        .then(response => response.json())
+        .then(data => {
+          let logContainer = document.getElementById('attendance-log');
+          let html = '';
+          data.reverse().forEach(entry => {
+            html += `<li class="border-b py-1">${entry.name} - ${entry.event} - ${entry.time}</li>`;
+          });
+          logContainer.innerHTML = html;
+        });
+    }
+    setInterval(fetchAttendance, 5000);
+    
+    // Attendance Chart using Chart.js
+    let chart;
+    function updateChart() {
+      fetch('/api/attendance')
+        .then(response => response.json())
+        .then(data => {
+          let counts = {};
+          data.forEach(entry => {
+            if(entry.event === 'IN'){
+              counts[entry.name] = (counts[entry.name] || 0) + 1;
+            }
+          });
+          let labels = Object.keys(counts);
+          let values = Object.values(counts);
+          if(chart) {
+            chart.data.labels = labels;
+            chart.data.datasets[0].data = values;
+            chart.update();
+          } else {
+            const ctx = document.getElementById('attendanceChart').getContext('2d');
+            chart = new Chart(ctx, {
+              type: 'bar',
+              data: {
+                labels: labels,
+                datasets: [{
+                  label: 'Attendance Count (IN)',
+                  data: values,
+                  backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                  borderColor: 'rgba(54, 162, 235, 1)',
+                  borderWidth: 1
+                }]
+              },
+              options: {
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    ticks: { precision: 0 }
+                  }
+                }
+              }
+            });
+          }
+        });
+    }
+    setInterval(updateChart, 5000);
+    updateChart();
+    
+    // Clear attendance log
+    function clearAttendance() {
+      if(confirm("Are you sure you want to clear the attendance log?")){
+        fetch('/clear', { method: 'POST' })
+          .then(response => response.json())
+          .then(data => {
+            alert(data.status);
+            fetchAttendance();
+          });
+      }
+    }
+    
+    // Download CSV file
+    function downloadCSV() {
+      window.location.href = '/download';
+    }
+    
+    // Fetch reports with filter parameters
+    function fetchReports() {
+      const nameFilter = document.getElementById('report-name').value;
+      const dateFilter = document.getElementById('report-date').value;
+      const url = `/api/reports?name=${encodeURIComponent(nameFilter)}&date=${encodeURIComponent(dateFilter)}`;
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          let tableBody = document.getElementById('reports-table-body');
+          let html = '';
+          data.forEach(row => {
+            html += `<tr>
+              <td class="border px-4 py-2">${row.name}</td>
+              <td class="border px-4 py-2">${row.event}</td>
+              <td class="border px-4 py-2">${row.time}</td>
+            </tr>`;
+          });
+          if(html === ''){
+            html = `<tr><td colspan="3" class="text-center py-2">No records found.</td></tr>`;
+          }
+          tableBody.innerHTML = html;
+        });
+    }
+    
+    // Fetch unknown faces for the gallery
+    function fetchUnknownFaces() {
+      fetch('/api/unknown_faces')
+        .then(response => response.json())
+        .then(data => {
+          let gallery = document.getElementById('unknown-gallery');
+          let html = '';
+          data.forEach(image => {
+            html += `<div class="bg-gray-100 p-2 rounded shadow">
+              <img src="/unknown_faces/${image}" alt="${image}" class="w-full h-auto rounded">
+              <p class="text-center text-sm mt-1">${image}</p>
+            </div>`;
+          });
+          if(data.length === 0){
+            html = '<p class="text-center">No unknown faces have been captured yet.</p>';
+          }
+          gallery.innerHTML = html;
+        });
+    }
+    
+    // Handle manual attendance entry submission via AJAX
+    function submitManualEntry(event) {
+      event.preventDefault();
+      const form = event.target;
+      const formData = new FormData(form);
+      fetch('/manual_entry', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById('manual-message').textContent = data.message;
+        form.reset();
+      });
+    }
+  </script>
+</body>
+</html>
