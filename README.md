@@ -1,4 +1,4 @@
-# AttendanceFrontend
+# FaceCheck In
 
 ## Problem Statement
 Managing attendance manually can be time-consuming and prone to errors. Traditional methods of attendance tracking, such as roll calls and sign-in sheets, lack efficiency and accuracy. Additionally, monitoring unauthorized access to restricted areas is a challenge. Our solution automates attendance tracking using AI-powered facial recognition to improve efficiency, security, and reliability.
