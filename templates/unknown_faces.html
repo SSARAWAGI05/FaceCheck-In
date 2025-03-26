@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Unknown Faces Gallery</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <style>
+    .img-thumbnail { margin: 10px; width: 200px; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1 class="mt-4">Unknown Faces Gallery</h1>
+  <div class="row">
+    {% for image in images %}
+    <div class="col-md-3">
+      <div class="card">
+        <img src="{{ url_for('get_unknown_face', filename=image) }}" class="card-img-top img-thumbnail" alt="{{ image }}">
+        <div class="card-body">
+          <p class="card-text">{{ image }}</p>
+        </div>
+      </div>
+    </div>
+    {% else %}
+      <p>No unknown faces have been captured yet.</p>
+    {% endfor %}
+  </div>
+  <a href="{{ url_for('index') }}" class="btn btn-primary mt-3">Back to Dashboard</a>
+</div>
+</body>
+</html>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Manual Attendance Entry</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+<div class="container">
+  <h1 class="mt-4">Manual Attendance Entry</h1>
+  {% if message %}
+    <div class="alert alert-info">{{ message }}</div>
+  {% endif %}
+  <form method="post">
+    <div class="form-group">
+      <label for="name">Student Name:</label>
+      <input type="text" id="name" name="name" class="form-control" required>
+    </div>
+    <div class="form-group">
+      <label for="event">Event (IN/OUT):</label>
+      <select id="event" name="event" class="form-control" required>
+        <option value="IN">IN</option>
+        <option value="OUT">OUT</option>
+      </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Submit</button>
+  </form>
+  <a href="{{ url_for('index') }}" class="btn btn-secondary mt-3">Back to Dashboard</a>
+</div>
+</body>
+</html>

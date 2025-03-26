@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Attendance Reports</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+<div class="container">
+  <h1 class="mt-4">Attendance Reports</h1>
+  <form method="get" class="form-inline mb-3">
+    <div class="form-group mr-2">
+      <label for="name" class="mr-2">Student Name:</label>
+      <input type="text" id="name" name="name" class="form-control" value="{{ filter_name }}">
+    </div>
+    <div class="form-group mr-2">
+      <label for="date" class="mr-2">Date (YYYY-MM-DD):</label>
+      <input type="text" id="date" name="date" class="form-control" value="{{ filter_date }}">
+    </div>
+    <button type="submit" class="btn btn-primary">Filter</button>
+  </form>
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Event</th>
+        <th>Timestamp</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in attendance %}
+      <tr>
+        <td>{{ row.name }}</td>
+        <td>{{ row.event }}</td>
+        <td>{{ row.time }}</td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="3">No records found.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <a href="{{ url_for('index') }}" class="btn btn-primary">Back to Dashboard</a>
+</div>
+</body>
+</html>
